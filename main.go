@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"math/rand"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -27,6 +29,11 @@ func getData(w http.ResponseWriter, r *http.Request) {
 
 func postData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	var user Data
+	_ = json.NewDecoder(r.Body).Decode(&user)
+	user.ID = strconv.Itoa(rand.Intn(1000)) // Test ID
+	datas = append(datas, user)
+	json.NewEncoder(w).Encode(user)
 
 }
 
@@ -54,7 +61,8 @@ func main() {
 	r.HandleFunc("/", getHome).Methods("GET")
 	r.HandleFunc("/data", getData).Methods("GET")
 	r.HandleFunc("/data/{id}", getDataById).Methods("GET")
-	r.HandleFunc("/data", postData).Methods("POST")
+
+	r.HandleFunc("/datas", postData).Methods("POST")
 
 	http.ListenAndServe(":3000", r)
 }

@@ -50,6 +50,23 @@ func getDataById(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&Data{})
 }
 
+func putData(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func deleteData(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	for index, item := range datas {
+		if item.ID == params["id"] {
+			datas = append(datas[:index], datas[index+1:]...)
+			break
+		}
+
+	}
+	json.NewEncoder(w).Encode(datas)
+}
+
 func main() {
 
 	//Add mock data
@@ -58,11 +75,19 @@ func main() {
 
 	r := mux.NewRouter()
 
+	//GET
 	r.HandleFunc("/", getHome).Methods("GET")
 	r.HandleFunc("/data", getData).Methods("GET")
 	r.HandleFunc("/data/{id}", getDataById).Methods("GET")
 
-	r.HandleFunc("/datas", postData).Methods("POST")
+	//POST
+	r.HandleFunc("/data", postData).Methods("POST")
+
+	//PUT
+	r.HandleFunc("/data/update", putData).Methods("PUT")
+
+	//DELETE
+	r.HandleFunc("/data/delete/{id}", deleteData).Methods("DELETE")
 
 	http.ListenAndServe(":3000", r)
 }

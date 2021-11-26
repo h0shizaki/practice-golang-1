@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -17,6 +18,7 @@ type Data struct {
 
 //Init data
 var datas []Data
+var allowedHeaders string = "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization,X-CSRF-Token"
 
 func getHome(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello GO!"))
@@ -24,6 +26,10 @@ func getHome(w http.ResponseWriter, r *http.Request) {
 
 func getData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
+	w.Header().Set("Access-Control-Expose-Headers", "Authorization")
 	json.NewEncoder(w).Encode(datas)
 }
 
@@ -51,6 +57,22 @@ func getDataById(w http.ResponseWriter, r *http.Request) {
 }
 
 func putData(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	for index, item := range datas {
+		if item.ID == params["id"] {
+			datas = append(datas[:index], datas[index+1:]...)
+			break
+
+		}
+	}
+
+	var user Data
+	_ = json.NewDecoder(r.Body).Decode(&user)
+	user.ID = params["id"]
+	datas = append(datas, user)
+	json.NewEncoder(w).Encode(user)
+	return
 
 }
 
@@ -84,10 +106,21 @@ func main() {
 	r.HandleFunc("/data", postData).Methods("POST")
 
 	//PUT
-	r.HandleFunc("/data/update", putData).Methods("PUT")
+	r.HandleFunc("/data/update/{id}", putData).Methods("PUT")
 
 	//DELETE
 	r.HandleFunc("/data/delete/{id}", deleteData).Methods("DELETE")
 
+	// f := func(w http.ResponseWriter, r *http.Request) {
+	// 	if origin := r.Header.Get("Origin"); origin != "" {
+	// 		w.Header().Set("Access-Control-Allow-Origin", "*")
+	// 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	// 		w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
+	// 		w.Header().Set("Access-Control-Expose-Headers", "Authorization")
+	// 	}
+	// 	return
+	// }
+
+	log.Println("Listening on :3000...")
 	http.ListenAndServe(":3000", r)
 }
